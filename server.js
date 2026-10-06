@@ -7,7 +7,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Esta línea asegura la ruta exacta hacia la carpeta public:
+// Servir archivos estáticos desde la carpeta public
 app.use(express.static(path.join(__dirname, 'public')));
 
 let jugadores = {};
@@ -55,10 +55,20 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Manejar desconexión y liberar espacios
     socket.on('disconnect', () => {
-        if (socket.id === jugadores.p1) delete jugadores.p1;
-        if (socket.id === jugadores.p2) delete jugadores.p2;
+        if (socket.id === jugadores.p1) {
+            delete jugadores.p1;
+        } else if (socket.id === jugadores.p2) {
+            delete jugadores.p2;
+        }
+
+        // Si se va uno, reseteamos las elecciones y marcadores para la siguiente partida
         elecciones = {};
+        if (!jugadores.p1 && !jugadores.p2) {
+            scores = { p1: 0, p2: 0 };
+        }
+
         io.emit('estadoPartida', { lista: false });
     });
 });
@@ -75,8 +85,8 @@ function evaluar(j1, j2) {
     return 2; // Gana Jugador 2
 }
 
-const PORT = 3000;
+// Configuración de puerto compatible con Render
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
+    console.log(`Servidor ejecutándose en el puerto ${PORT}`);
 });
-
