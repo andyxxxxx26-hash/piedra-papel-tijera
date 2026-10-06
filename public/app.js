@@ -1,96 +1,102 @@
+// Conectar automáticamente al mismo servidor que sirve la página (mantiene HTTPS)
 const socket = io();
 
-let miJugadorNum = 0;
-let yaEligio = false;
+let miRol = 0; // 1 para Jugador 1, 2 para Jugador 2, 0 para Espectador
 
-const rolTexto = document.getElementById('rolTexto');
-const resultadoTexto = document.getElementById('resultadoTexto');
-const instruccion = document.getElementById('instruccion');
+// Elementos del DOM
+const estadoTexto = document.getElementById('estado');
+const subTexto = document.getElementById('subtexto');
+const scoreP1 = document.getElementById('score-p1');
+const scoreP2 = document.getElementById('score-p2');
+const j1Eleccion = document.getElementById('j1-eleccion');
+const j2Eleccion = document.getElementById('j2-eleccion');
+const botones = document.querySelectorAll('.btn-opcion');
 
-const eleccionJ1 = document.getElementById('eleccionJ1');
-const eleccionJ2 = document.getElementById('eleccionJ2');
-
-const scoreJ1 = document.getElementById('scoreJ1');
-const scoreJ2 = document.getElementById('scoreJ2');
-
-const btnPiedra = document.getElementById('btnPiedra');
-const btnPapel = document.getElementById('btnPapel');
-const btnTijera = document.getElementById('btnTijera');
-const botones = [btnPiedra, btnPapel, btnTijera];
-
-// Asignar número de jugador
+// 1. Recibir rol asignado
 socket.on('asignarRol', (data) => {
-    miJugadorNum = data.jugador;
-    if (miJugadorNum === 0) {
-        rolTexto.textContent = "La sala está llena (Espectador)";
+    miRol = data.jugador;
+    if (miRol === 1) {
+        if (subTexto) subTexto.textContent = "Eres el Jugador 1";
+    } else if (miRol === 2) {
+        if (subTexto) subTexto.textContent = "Eres el Jugador 2";
     } else {
-        rolTexto.textContent = `Eres el Jugador ${miJugadorNum}`;
+        if (subTexto) subTexto.textContent = "La sala está llena (Espectador)";
+        deshabilitarBotones(true);
     }
 });
 
-// Estado de la conexión de ambos jugadores
+// 2. Recibir estado de la partida
 socket.on('estadoPartida', (data) => {
-    if (data.lista && miJugadorNum !== 0) {
-        resultadoTexto.textContent = "¡Partida lista! Elige tu opción.";
-        habilitarBotones(true);
+    if (data.lista) {
+        if (estadoTexto) estadoTexto.textContent = "¡Partida lista! Elige tu opción.";
+        if (miRol !== 0) deshabilitarBotones(false);
     } else {
-        resultadoTexto.textContent = "Esperando al otro jugador...";
-        habilitarBotones(false);
+        if (estadoTexto) estadoTexto.textContent = "Esperando al otro jugador...";
+        if (j1Eleccion) j1Eleccion.textContent = "Jugador 1: -";
+        if (j2Eleccion) j2Eleccion.textContent = "Jugador 2: -";
+        deshabilitarBotones(true);
     }
 });
 
-// Registrar la elección al hacer clic
-function enviarEleccion(opcion) {
-    if (yaEligio || miJugadorNum === 0) return;
-    yaEligio = true;
-    habilitarBotones(false);
-    instruccion.textContent = "Opción enviada. Esperando al rival...";
-    socket.emit('hacerJugada', { jugador: miJugadorNum, eleccion: opcion });
-}
-
-// Avisar si el rival ya eligió
+// 3. Notificar cuando el otro jugador eligió
 socket.on('jugadorListo', (data) => {
-    if (data.jugador !== miJugadorNum) {
-        resultadoTexto.textContent = "El rival ya eligió. ¡Haz tu jugada!";
+    if (data.jugador === 1 && j1Eleccion) {
+        j1Eleccion.textContent = "Jugador 1: ¡Listo!";
+    } else if (data.jugador === 2 && j2Eleccion) {
+        j2Eleccion.textContent = "Jugador 2: ¡Listo!";
     }
 });
 
-// Mostrar los resultados de la ronda
+// 4. Mostrar resultado de la ronda
 socket.on('resultadoRonda', (data) => {
-    eleccionJ1.textContent = `Jugador 1: ${capitalizar(data.elecciones[1])}`;
-    eleccionJ2.textContent = `Jugador 2: ${capitalizar(data.elecciones[2])}`;
+    // Mostrar jugadas hechas
+    const emojis = { piedra: "✊", papel: "✋", tijera: "✌️" };
+    if (j1Eleccion) j1Eleccion.textContent = `Jugador 1: ${emojis[data.elecciones[1]] || '-'}`;
+    if (j2Eleccion) j2Eleccion.textContent = `Jugador 2: ${emojis[data.elecciones[2]] || '-'}`;
 
-    scoreJ1.textContent = data.scores.p1;
-    scoreJ2.textContent = data.scores.p2;
+    // Actualizar marcadores
+    if (scoreP1) scoreP1.textContent = data.scores.p1;
+    if (scoreP2) scoreP2.textContent = data.scores.p2;
 
+    // Mostrar ganador de la ronda
     if (data.ganador === 0) {
-        resultadoTexto.textContent = "🤝 ¡Empate!";
-    } else if (data.ganador === miJugadorNum) {
-        resultadoTexto.textContent = "🏆 ¡Ganaste la ronda!";
+        if (estadoTexto) estadoTexto.textContent = "¡Empate! Elijan de nuevo.";
+    } else if (data.ganador === miRol) {
+        if (estadoTexto) estadoTexto.textContent = "¡Ganaste esta ronda! 🎉";
+    } else if (miRol !== 0) {
+        if (estadoTexto) estadoTexto.textContent = "Perdiste esta ronda 😞";
     } else {
-        resultadoTexto.textContent = "❌ ¡Perdiste la ronda!";
+        if (estadoTexto) estadoTexto.textContent = `Ganó el Jugador ${data.ganador}`;
     }
 
-    // Preparar para la siguiente ronda automáticamente tras 3 segundos
+    // Permitir jugar la siguiente ronda tras 2 segundos
     setTimeout(() => {
-        yaEligio = false;
-        eleccionJ1.textContent = "Jugador 1: -";
-        eleccionJ2.textContent = "Jugador 2: -";
-        resultadoTexto.textContent = "Nueva ronda. ¡Elige!";
-        instruccion.textContent = "Elige una opción:";
-        habilitarBotones(true);
-    }, 3000);
+        if (miRol !== 0) deshabilitarBotones(false);
+    }, 2000);
 });
 
-function habilitarBotones(estado) {
-    botones.forEach(btn => btn.disabled = !estado);
+// 5. Escuchar clics en las opciones (Piedra, Papel, Tijera)
+botones.forEach(boton => {
+    boton.addEventListener('click', (e) => {
+        if (miRol === 0) return;
+
+        // Obtener la opción desde el atributo data-opcion o por la clase/texto
+        const eleccion = boton.getAttribute('data-opcion') || e.currentTarget.id;
+        
+        // Enviar jugada al servidor
+        socket.emit('hacerJugada', {
+            jugador: miRol,
+            eleccion: eleccion
+        });
+
+        // Feedback visual inmediato
+        if (miRol === 1 && j1Eleccion) j1Eleccion.textContent = "Jugador 1: ¡Listo!";
+        if (miRol === 2 && j2Eleccion) j2Eleccion.textContent = "Jugador 2: ¡Listo!";
+        
+        deshabilitarBotones(true);
+    });
+});
+
+function deshabilitarBotones(deshabilitar) {
+    botones.forEach(b => b.disabled = deshabilitar);
 }
-
-function capitalizar(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-btnPiedra.addEventListener('click', () => enviarEleccion('piedra'));
-btnPapel.addEventListener('click', () => enviarEleccion('papel'));
-btnTijera.addEventListener('click', () => enviarEleccion('tijera'));
-
