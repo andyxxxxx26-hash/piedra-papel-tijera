@@ -1,1 +1,130 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #1e1e2f, #2d2b55);
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.Juego {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    max-width: 450px;
+    width: 100%;
+}
+
+h1 {
+    font-size: 1.8rem;
+    color: #ffcc00;
+}
+
+.subtitulo {
+    color: #00d2ff;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.marcador {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.score-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.score-box .label {
+    font-size: 0.8rem;
+    color: #a0a0c0;
+}
+
+.score-box .points {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #ffcc00;
+}
+
+.score-divider {
+    font-size: 1.6rem;
+    color: #555577;
+}
+
+.resultado {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.resultado p {
+    font-size: 1rem;
+    margin: 5px 0;
+}
+
+#resultadoTexto {
+    margin-top: 10px;
+    font-size: 1.2rem;
+    color: #00ff88;
+}
+
+#instruccion {
+    margin-bottom: 15px;
+    color: #ffcc00;
+}
+
+.opciones {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.opciones button {
+    background: #2a2a40;
+    border: 2px solid #3f3f60;
+    border-radius: 50%;
+    width: 75px;
+    height: 75px;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.opciones button:hover:not(:disabled) {
+    transform: scale(1.1);
+    border-color: #00ff88;
+}
+
+.opciones button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.piedra::after { content: "✊"; }
+.papel::after { content: "✋"; }
+.tijera::after { content: "✌️"; }
 
