@@ -6,7 +6,10 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static('public'));
+const path = require('path');
+
+// Esta línea asegura la ruta exacta hacia la carpeta public:
+app.use(express.static(path.join(__dirname, 'public')));
 
 let jugadores = {};
 let elecciones = {};
@@ -77,8 +80,4 @@ const PORT = 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
 });
-const path = require('path');
 
-// Esta línea asegura la ruta exacta hacia la carpeta public:
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static('public'));
