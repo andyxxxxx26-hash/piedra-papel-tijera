@@ -1,73 +1,78 @@
 window.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
-    let miRol = 0; // 1 para Jugador 1, 2 para Jugador 2, 0 para Espectador
+    let miRol = 0; // 1: Jugador 1, 2: Jugador 2, 0: Espectador
 
-    // Elementos del DOM (se obtienen una vez cargado el HTML)
-    const estadoTexto = document.getElementById('estado');
-    const subTexto = document.getElementById('subtexto');
-    const scoreP1 = document.getElementById('score-p1');
-    const scoreP2 = document.getElementById('score-p2');
-    const j1Eleccion = document.getElementById('j1-eleccion');
-    const j2Eleccion = document.getElementById('j2-eleccion');
-    const botones = document.querySelectorAll('.btn-opcion');
+    // Elementos del DOM tomados de tu HTML exacto
+    const rolTexto = document.getElementById('rolTexto');
+    const scoreJ1 = document.getElementById('scoreJ1');
+    const scoreJ2 = document.getElementById('scoreJ2');
+    const eleccionJ1 = document.getElementById('eleccionJ1');
+    const eleccionJ2 = document.getElementById('eleccionJ2');
+    const resultadoTexto = document.getElementById('resultadoTexto');
+
+    // Botones con las clases de tu HTML (.piedra, .papel, .tijera)
+    const btnPiedra = document.querySelector('.piedra');
+    const btnPapel = document.querySelector('.papel');
+    const btnTijera = document.querySelector('.tijera');
+    const botones = [btnPiedra, btnPapel, btnTijera].filter(Boolean);
 
     function deshabilitarBotones(deshabilitar) {
         botones.forEach(b => b.disabled = deshabilitar);
     }
 
-    // 1. Recibir rol asignado
+    // 1. Asignar rol
     socket.on('asignarRol', (data) => {
         miRol = data.jugador;
         if (miRol === 1) {
-            if (subTexto) subTexto.textContent = "Eres el Jugador 1";
+            if (rolTexto) rolTexto.textContent = "Eres el Jugador 1";
         } else if (miRol === 2) {
-            if (subTexto) subTexto.textContent = "Eres el Jugador 2";
+            if (rolTexto) rolTexto.textContent = "Eres el Jugador 2";
         } else {
-            if (subTexto) subTexto.textContent = "La sala está llena (Espectador)";
+            if (rolTexto) rolTexto.textContent = "La sala está llena (Espectador)";
             deshabilitarBotones(true);
         }
     });
 
-    // 2. Recibir estado de la partida
+    // 2. Estado de la partida
     socket.on('estadoPartida', (data) => {
         if (data.lista) {
-            if (estadoTexto) estadoTexto.textContent = "¡Partida lista! Elige tu opción.";
+            if (resultadoTexto) resultadoTexto.textContent = "¡Partida lista! Elige tu opción.";
             if (miRol !== 0) deshabilitarBotones(false);
         } else {
-            if (estadoTexto) estadoTexto.textContent = "Esperando al otro jugador...";
-            if (j1Eleccion) j1Eleccion.textContent = "Jugador 1: -";
-            if (j2Eleccion) j2Eleccion.textContent = "Jugador 2: -";
+            if (resultadoTexto) resultadoTexto.textContent = "Esperando al otro jugador...";
+            if (eleccionJ1) eleccionJ1.textContent = "Jugador 1: -";
+            if (eleccionJ2) eleccionJ2.textContent = "Jugador 2: -";
             deshabilitarBotones(true);
         }
     });
 
-    // 3. Notificar cuando el otro jugador eligió
+    // 3. Notificar cuando el rival eligió
     socket.on('jugadorListo', (data) => {
-        if (data.jugador === 1 && j1Eleccion) {
-            j1Eleccion.textContent = "Jugador 1: ¡Listo!";
-        } else if (data.jugador === 2 && j2Eleccion) {
-            j2Eleccion.textContent = "Jugador 2: ¡Listo!";
+        if (data.jugador === 1 && eleccionJ1) {
+            eleccionJ1.textContent = "Jugador 1: ¡Listo!";
+        } else if (data.jugador === 2 && eleccionJ2) {
+            eleccionJ2.textContent = "Jugador 2: ¡Listo!";
         }
     });
 
     // 4. Mostrar resultado de la ronda
     socket.on('resultadoRonda', (data) => {
         const emojis = { piedra: "✊", papel: "✋", tijera: "✌️" };
-        if (j1Eleccion) j1Eleccion.textContent = `Jugador 1: ${emojis[data.elecciones[1]] || '-'}`;
-        if (j2Eleccion) j2Eleccion.textContent = `Jugador 2: ${emojis[data.elecciones[2]] || '-'}`;
+        if (eleccionJ1) eleccionJ1.textContent = `Jugador 1: ${emojis[data.elecciones[1]] || '-'}`;
+        if (eleccionJ2) eleccionJ2.textContent = `Jugador 2: ${emojis[data.elecciones[2]] || '-'}`;
 
-        if (scoreP1) scoreP1.textContent = data.scores.p1;
-        if (scoreP2) scoreP2.textContent = data.scores.p2;
+        if (scoreJ1) scoreJ1.textContent = data.scores.p1;
+        if (scoreJ2) scoreJ2.textContent = data.scores.p2;
 
         if (data.ganador === 0) {
-            if (estadoTexto) estadoTexto.textContent = "¡Empate! Elijan de nuevo.";
+            if (resultadoTexto) resultadoTexto.textContent = "¡Empate! Elijan de nuevo.";
         } else if (data.ganador === miRol) {
-            if (estadoTexto) estadoTexto.textContent = "¡Ganaste esta ronda! 🎉";
+            if (resultadoTexto) resultadoTexto.textContent = "¡Ganaste esta ronda! 🎉";
         } else if (miRol !== 0) {
-            if (estadoTexto) estadoTexto.textContent = "Perdiste esta ronda 😞";
+            if (resultadoTexto) resultadoTexto.textContent = "Perdiste esta ronda 😞";
         } else {
-            if (estadoTexto) estadoTexto.textContent = `Ganó el Jugador ${data.ganador}`;
+            if (resultadoTexto) resultadoTexto.textContent = `Ganó el Jugador ${data.ganador}`;
         }
 
         setTimeout(() => {
@@ -75,26 +80,22 @@ window.addEventListener('DOMContentLoaded', () => {
         }, 2000);
     });
 
-    // 5. Escuchar clics en las opciones
-    botones.forEach(boton => {
-        boton.addEventListener('click', (e) => {
-            if (miRol === 0) return;
+    // 5. Escuchar clics en tus 3 botones
+    if (btnPiedra) btnPiedra.addEventListener('click', () => enviarJugada('piedra'));
+    if (btnPapel) btnPapel.addEventListener('click', () => enviarJugada('papel'));
+    if (btnTijera) btnTijera.addEventListener('click', () => enviarJugada('tijera'));
 
-            const eleccion = boton.getAttribute('data-opcion') || e.currentTarget.id;
+    function enviarJugada(opcion) {
+        if (miRol === 0) return;
 
-            socket.emit('hacerJugada', {
-                jugador: miRol,
-                eleccion: eleccion
-            });
-
-            if (miRol === 1 && j1Eleccion) j1Eleccion.textContent = "Jugador 1: ¡Listo!";
-            if (miRol === 2 && j2Eleccion) j2Eleccion.textContent = "Jugador 2: ¡Listo!";
-
-            deshabilitarBotones(true);
+        socket.emit('hacerJugada', {
+            jugador: miRol,
+            eleccion: opcion
         });
-    });
-});
 
-function deshabilitarBotones(deshabilitar) {
-    botones.forEach(b => b.disabled = deshabilitar);
-}
+        if (miRol === 1 && eleccionJ1) eleccionJ1.textContent = "Jugador 1: ¡Listo!";
+        if (miRol === 2 && eleccionJ2) eleccionJ2.textContent = "Jugador 2: ¡Listo!";
+
+        deshabilitarBotones(true);
+    }
+});
