@@ -1,14 +1,12 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static('public'));
-
-const path = require('path');
 // Esta línea asegura la ruta exacta hacia la carpeta public:
 app.use(express.static(path.join(__dirname, 'public')));
 
