@@ -1,5 +1,10 @@
 window.addEventListener('DOMContentLoaded', () => {
-    const socket = io();
+    // --- CONEXIÓN COMPATIBLE CON WEB Y APLICACIÓN MÓVIL (.APK) ---
+    const SERVER_URL = "https://piedra-papel-tijera-9k7e.onrender.com"; // <-- REEMPLAZA ESTO CON LA URL REAL DE TU SERVIDOR EN RENDER
+
+    const socket = window.location.protocol.startsWith('http') && !window.location.hostname.includes('localhost')
+        ? io() 
+        : io(SERVER_URL);
 
     let miRol = 0;
 
