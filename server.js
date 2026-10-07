@@ -34,7 +34,7 @@ io.on('connection', (socket) => {
             elecciones: {},
             scores: { p1: 0, p2: 0 },
             timer: null,
-            tiempo: 10
+            tiempo: 15
         });
 
         socket.join(codigo);
