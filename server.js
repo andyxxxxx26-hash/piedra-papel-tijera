@@ -104,7 +104,7 @@ function iniciarTemporizador(codigo) {
     if (!sala) return;
 
     clearInterval(sala.timer);
-    sala.tiempo = 10;
+    sala.tiempo = 15;
     io.to(codigo).emit('actualizarTimer', { tiempo: sala.tiempo });
 
     sala.timer = setInterval(() => {
