@@ -30,13 +30,110 @@ body {
 h1 {
     font-size: 1.8rem;
     color: #ffcc00;
+    margin-bottom: 20px;
 }
 
+/* --- ESTILOS DEL LOBBY --- */
+.lobby-divider {
+    border: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 20px 0;
+}
+
+.lobby-input-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#inputCodigo {
+    flex: 1;
+    min-width: 180px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+    color: #ffffff;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.3s ease;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+}
+
+#inputCodigo:focus {
+    border-color: #00d2ff;
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+}
+
+#inputCodigo::placeholder {
+    color: #8a8aa0;
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: normal;
+}
+
+.btn-lobby {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+#btnCrear {
+    background: linear-gradient(135deg, #00ff88, #00b359);
+    color: #121212;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+    display: block;
+}
+
+#btnCrear:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+}
+
+#btnUnirse {
+    background: linear-gradient(135deg, #00d2ff, #0072ff);
+    color: #ffffff;
+}
+
+#btnUnirse:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 210, 255, 0.4);
+}
+
+.btn-lobby:active {
+    transform: translateY(0);
+}
+
+#errorLobby {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #ff4d4d;
+    font-weight: bold;
+    min-height: 20px;
+}
+
+/* --- ESTILOS DEL JUEGO --- */
 .subtitulo {
     color: #00d2ff;
     font-size: 1rem;
     margin-bottom: 15px;
     font-weight: bold;
+}
+
+#timerTexto {
+    margin-bottom: 15px;
 }
 
 .marcador {
