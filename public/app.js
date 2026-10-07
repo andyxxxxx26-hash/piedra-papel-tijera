@@ -71,11 +71,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
         const codigoDisplay = document.getElementById('codigoDisplay');
         const rolTexto = document.getElementById('rolTexto');
+        const timerDisplay = document.getElementById('timerDisplay');
 
         if (codigoDisplay) codigoDisplay.textContent = codigo;
         if (rolTexto) rolTexto.textContent = texto;
+        if (timerDisplay) timerDisplay.textContent = "15"; // Forzar valor visual a 15s iniciales
 
-        // Asignar los eventos de clic a los botones una vez que el contenedor es visible
         asignarEventosJuego();
         deshabilitarBotones(true);
     }
@@ -132,9 +133,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
         deshabilitarBotones(true);
 
+        // Limpiar estado para la siguiente ronda
         setTimeout(() => {
             deshabilitarBotones(false);
             if (resultadoTexto) resultadoTexto.textContent = "¡Siguiente ronda! Elige tu opción.";
+            if (eleccionJ1) eleccionJ1.textContent = "Jugador 1: -";
+            if (eleccionJ2) eleccionJ2.textContent = "Jugador 2: -";
         }, 3000);
     });
 
