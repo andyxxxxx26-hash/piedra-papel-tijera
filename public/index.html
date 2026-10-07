@@ -14,10 +14,14 @@
         <!-- Pantalla de Lobby (Salas) -->
         <div id="lobbyContainer">
             <button id="btnCrear" class="btn-lobby">Crear Sala Privada</button>
-            <hr>
-            <input type="text" id="inputCodigo" placeholder="Código de Sala (ej. A1B2)" maxlength="4">
-            <button id="btnUnirse" class="btn-lobby">Unirse a Sala</button>
-            <p id="errorLobby" style="color: red; margin-top: 10px;"></p>
+            <hr class="lobby-divider">
+            
+            <div class="lobby-input-group">
+                <input type="text" id="inputCodigo" placeholder="Código de Sala (ej. A1B2)" maxlength="4">
+                <button id="btnUnirse" class="btn-lobby">Unirse a Sala</button>
+            </div>
+            
+            <p id="errorLobby"></p>
         </div>
 
         <!-- Pantalla del Juego (Oculta al inicio) -->
@@ -57,4 +61,3 @@
     <script src="app.js?v=4"></script>
 </body>
 </html>
-
