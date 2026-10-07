@@ -3,39 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Piedra, Papel o Tijera - Multijugador Local</title>
+    <title>Piedra, Papel o Tijera - Con Salas</title>
     <link rel="stylesheet" href="styles.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
     <div class="Juego">
         <h1>Piedra, Papel o Tijera</h1>
-        <p id="rolTexto" class="subtitulo">Conectando...</p>
 
-        <div class="marcador">
-            <div class="score-box">
-                <span class="label">Jugador 1</span>
-                <span id="scoreJ1" class="points">0</span>
-            </div>
-            <div class="score-divider">:</div>
-            <div class="score-box">
-                <span class="label">Jugador 2</span>
-                <span id="scoreJ2" class="points">0</span>
-            </div>
+        <!-- Pantalla de Lobby (Salas) -->
+        <div id="lobbyContainer">
+            <button id="btnCrear" class="btn-lobby">Crear Sala Privada</button>
+            <hr>
+            <input type="text" id="inputCodigo" placeholder="Código de Sala (ej. A1B2)" maxlength="4">
+            <button id="btnUnirse" class="btn-lobby">Unirse a Sala</button>
+            <p id="errorLobby" style="color: red; margin-top: 10px;"></p>
         </div>
 
-        <div class="resultado">
-            <p id="eleccionJ1">Jugador 1: -</p>
-            <p id="eleccionJ2">Jugador 2: -</p>
-            <h2 id="resultadoTexto">Esperando al otro jugador...</h2>
-        </div>
+        <!-- Pantalla del Juego (Oculta al inicio) -->
+        <div id="juegoContainer" style="display: none;">
+            <p id="codigoTexto" class="subtitulo">Código de sala: <b id="codigoDisplay">----</b></p>
+            <p id="rolTexto" class="subtitulo">Conectando...</p>
+            <h3 id="timerTexto">Tiempo restante: <span id="timerDisplay">10</span>s</h3>
 
-        <p id="instruccion">Elige una opción:</p>
+            <div class="marcador">
+                <div class="score-box">
+                    <span class="label">Jugador 1</span>
+                    <span id="scoreJ1" class="points">0</span>
+                </div>
+                <div class="score-divider">:</div>
+                <div class="score-box">
+                    <span class="label">Jugador 2</span>
+                    <span id="scoreJ2" class="points">0</span>
+                </div>
+            </div>
 
-        <div class="opciones">
-            <button class="piedra" title="Piedra"></button>
-            <button class="papel" title="Papel"></button>
-            <button class="tijera" title="Tijera"></button>
+            <div class="resultado">
+                <p id="eleccionJ1">Jugador 1: -</p>
+                <p id="eleccionJ2">Jugador 2: -</p>
+                <h2 id="resultadoTexto">Esperando al otro jugador...</h2>
+            </div>
+
+            <p id="instruccion">Elige una opción:</p>
+
+            <div class="opciones">
+                <button class="piedra" title="Piedra">✊</button>
+                <button class="papel" title="Papel">✋</button>
+                <button class="tijera" title="Tijera">✌️</button>
+            </div>
         </div>
     </div>
 
