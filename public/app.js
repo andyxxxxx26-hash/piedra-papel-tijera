@@ -3,7 +3,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     let miRol = 0;
 
-    // Contenedores del Lobby
+    // Contenedores
     const lobbyContainer = document.getElementById('lobbyContainer');
     const juegoContainer = document.getElementById('juegoContainer');
     const btnCrear = document.getElementById('btnCrear');
@@ -11,7 +11,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const inputCodigo = document.getElementById('inputCodigo');
     const errorLobby = document.getElementById('errorLobby');
 
-    // Confirmación de conexión
+    // Conexión
     socket.on('connect', () => {
         if (errorLobby) errorLobby.textContent = "";
     });
@@ -20,28 +20,24 @@ window.addEventListener('DOMContentLoaded', () => {
         if (errorLobby) errorLobby.textContent = "Conectando al servidor...";
     });
 
-    // Función para obtener los botones de juego cuando la pantalla sea visible
     function obtenerBotones() {
-        const btnPiedra = document.querySelector('.piedra');
-        const btnPapel = document.querySelector('.papel');
-        const btnTijera = document.querySelector('.tijera');
-        return [btnPiedra, btnPapel, btnTijera].filter(Boolean);
+        return Array.from(document.querySelectorAll('.opciones button'));
     }
 
     function deshabilitarBotones(deshabilitar) {
         obtenerBotones().forEach(b => b.disabled = deshabilitar);
     }
 
-    // Eventos del Lobby
+    // Eventos de Lobby
     if (btnCrear) {
-        btnCrear.addEventListener('click', () => {
+        btnCrear.onclick = () => {
             if (errorLobby) errorLobby.textContent = "Creando sala...";
             socket.emit('crearSala');
-        });
+        };
     }
 
     if (btnUnirse) {
-        btnUnirse.addEventListener('click', () => {
+        btnUnirse.onclick = () => {
             const codigo = inputCodigo ? inputCodigo.value.trim() : "";
             if (codigo) {
                 if (errorLobby) errorLobby.textContent = "Uniéndose...";
@@ -49,7 +45,7 @@ window.addEventListener('DOMContentLoaded', () => {
             } else if (errorLobby) {
                 errorLobby.textContent = "Ingresa un código válido.";
             }
-        });
+        };
     }
 
     socket.on('errorSala', (msg) => {
@@ -75,13 +71,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
         if (codigoDisplay) codigoDisplay.textContent = codigo;
         if (rolTexto) rolTexto.textContent = texto;
-        if (timerDisplay) timerDisplay.textContent = "15"; // Forzar valor visual a 15s iniciales
+        if (timerDisplay) timerDisplay.textContent = "15";
 
         asignarEventosJuego();
         deshabilitarBotones(true);
     }
 
-    // Eventos del Juego
+    // Eventos de Juego
     socket.on('estadoPartida', (data) => {
         const resultadoTexto = document.getElementById('resultadoTexto');
         if (data.lista) {
@@ -133,7 +129,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
         deshabilitarBotones(true);
 
-        // Limpiar estado para la siguiente ronda
         setTimeout(() => {
             deshabilitarBotones(false);
             if (resultadoTexto) resultadoTexto.textContent = "¡Siguiente ronda! Elige tu opción.";
