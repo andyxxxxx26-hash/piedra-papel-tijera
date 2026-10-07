@@ -5,41 +5,53 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: { origin: "*" }
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Estructura de salas:
-// salas[codigo] = { jugadores: { p1: socketId, p2: socketId }, elecciones: {}, scores: { p1: 0, p2: 0 }, timer: null, tiempo: 10 }
-let salas = {};
+// Estructura de salas en memoria
+const salas = new Map();
+
+// Generar código único de 4 caracteres en mayúsculas
+function generarCodigo() {
+    let codigo;
+    do {
+        codigo = Math.random().toString(36).substring(2, 6).toUpperCase();
+    } while (salas.has(codigo));
+    return codigo;
+}
 
 io.on('connection', (socket) => {
 
-    // Crear una nueva sala con código aleatorio de 4 letras
+    // Crear Sala
     socket.on('crearSala', () => {
-        const codigoSala = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const codigo = generarCodigo();
         
-        salas[codigoSala] = {
+        salas.set(codigo, {
             jugadores: { p1: socket.id, p2: null },
             elecciones: {},
             scores: { p1: 0, p2: 0 },
             timer: null,
             tiempo: 10
-        };
+        });
 
-        socket.join(codigoSala);
-        socket.codigoSala = codigoSala;
+        socket.join(codigo);
+        socket.codigoSala = codigo;
 
-        socket.emit('salaCreada', { codigo: codigoSala, jugador: 1 });
+        socket.emit('salaCreada', { codigo, jugador: 1 });
     });
 
-    // Unirse a una sala existente mediante código
-    socket.on('unirseSala', (codigo) => {
-        codigo = codigo.trim().toUpperCase();
-        const sala = salas[codigo];
+    // Unirse a Sala
+    socket.on('unirseSala', (codigoIngresado) => {
+        if (!codigoIngresado) return socket.emit('errorSala', 'Ingresa un código.');
+
+        const codigo = codigoIngresado.toString().trim().toUpperCase();
+        const sala = salas.get(codigo);
 
         if (!sala) {
-            return socket.emit('errorSala', 'La sala no existe.');
+            return socket.emit('errorSala', 'La sala no existe o expiró.');
         }
 
         if (sala.jugadores.p2) {
@@ -50,22 +62,22 @@ io.on('connection', (socket) => {
         socket.join(codigo);
         socket.codigoSala = codigo;
 
-        socket.emit('salaUnida', { codigo: codigo, jugador: 2 });
-        
-        // Notificar que la partida está lista e iniciar temporizador
+        socket.emit('salaUnida', { codigo, jugador: 2 });
+
+        // Notificar inicio de la partida
         io.to(codigo).emit('estadoPartida', { lista: true });
         iniciarTemporizador(codigo);
     });
 
-    // Manejar la jugada
+    // Registrar Jugada
     socket.on('hacerJugada', (data) => {
         const codigo = socket.codigoSala;
-        const sala = salas[codigo];
+        if (!codigo) return;
+        const sala = salas.get(codigo);
         if (!sala) return;
 
         sala.elecciones[data.jugador] = data.eleccion;
 
-        // Si ambos eligieron
         if (sala.elecciones[1] && sala.elecciones[2]) {
             evaluarRonda(codigo);
         } else {
@@ -73,25 +85,26 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Manejar desconexión
+    // Manejar Desconexión
     socket.on('disconnect', () => {
         const codigo = socket.codigoSala;
-        const sala = salas[codigo];
-
+        if (!codigo) return;
+        
+        const sala = salas.get(codigo);
         if (sala) {
             clearInterval(sala.timer);
             io.to(codigo).emit('estadoPartida', { lista: false });
-            delete salas[codigo];
+            salas.delete(codigo);
         }
     });
 });
 
 function iniciarTemporizador(codigo) {
-    const sala = salas[codigo];
+    const sala = salas.get(codigo);
     if (!sala) return;
 
     clearInterval(sala.timer);
-    sala.tiempo = 10; // 10 segundos por ronda
+    sala.tiempo = 10;
     io.to(codigo).emit('actualizarTimer', { tiempo: sala.tiempo });
 
     sala.timer = setInterval(() => {
@@ -100,7 +113,6 @@ function iniciarTemporizador(codigo) {
 
         if (sala.tiempo <= 0) {
             clearInterval(sala.timer);
-            // Si el tiempo expira, asignamos "nada" a quienes no eligieron
             if (!sala.elecciones[1]) sala.elecciones[1] = 'nada';
             if (!sala.elecciones[2]) sala.elecciones[2] = 'nada';
             evaluarRonda(codigo);
@@ -109,14 +121,14 @@ function iniciarTemporizador(codigo) {
 }
 
 function evaluarRonda(codigo) {
-    const sala = salas[codigo];
+    const sala = salas.get(codigo);
     if (!sala) return;
 
     clearInterval(sala.timer);
 
-    let j1 = sala.elecciones[1];
-    let j2 = sala.elecciones[2];
-    let resultado = evaluar(j1, j2);
+    const j1 = sala.elecciones[1];
+    const j2 = sala.elecciones[2];
+    const resultado = evaluar(j1, j2);
 
     if (resultado === 1) sala.scores.p1++;
     if (resultado === 2) sala.scores.p2++;
@@ -127,10 +139,9 @@ function evaluarRonda(codigo) {
         scores: sala.scores
     });
 
-    // Resetear elecciones e iniciar nueva ronda en 3 segundos
     sala.elecciones = {};
     setTimeout(() => {
-        if (salas[codigo]) {
+        if (salas.has(codigo)) {
             iniciarTemporizador(codigo);
         }
     }, 3000);
@@ -150,6 +161,11 @@ function evaluar(j1, j2) {
     }
     return 2;
 }
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor activo en el puerto ${PORT}`);
+});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
