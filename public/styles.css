@@ -13,6 +13,7 @@ body {
     justify-content: center;
     align-items: center;
     padding: 20px;
+    overflow-x: hidden;
 }
 
 .Juego {
@@ -25,6 +26,7 @@ body {
     text-align: center;
     max-width: 450px;
     width: 100%;
+    position: relative;
 }
 
 h1 {
@@ -48,6 +50,8 @@ h1 {
     flex-wrap: wrap;
 }
 
+/* Entrada de Nombre y Código */
+#inputNombre,
 #inputCodigo {
     flex: 1;
     min-width: 180px;
@@ -60,16 +64,21 @@ h1 {
     outline: none;
     transition: all 0.3s ease;
     text-align: center;
+}
+
+#inputCodigo {
     text-transform: uppercase;
     font-weight: bold;
     letter-spacing: 1.5px;
 }
 
+#inputNombre:focus,
 #inputCodigo:focus {
     border-color: #00d2ff;
     box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
 }
 
+#inputNombre::placeholder,
 #inputCodigo::placeholder {
     color: #8a8aa0;
     text-transform: none;
@@ -224,3 +233,76 @@ h1 {
 .piedra::after { content: "✊"; }
 .papel::after { content: "✋"; }
 .tijera::after { content: "✌️"; }
+
+/* --- REACCIONES Y EMOJIS FLOTANTES --- */
+.reacciones-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-emoji {
+    font-size: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-emoji:hover {
+    transform: scale(1.2);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.btn-emoji:active {
+    transform: scale(0.9);
+}
+
+.emoji-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.emoji-animado {
+    position: absolute;
+    font-size: 3.5rem;
+    animation: flotarEmoji 2s ease-out forwards;
+}
+
+.mi-emoji {
+    bottom: 25%;
+    left: 20%;
+}
+
+.rival-emoji {
+    top: 25%;
+    right: 20%;
+}
+
+@keyframes flotarEmoji {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.5);
+    }
+    30% {
+        opacity: 1;
+        transform: translateY(-20px) scale(1.3);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-90px) scale(1);
+    }
+}
