@@ -1,18 +1,20 @@
 window.addEventListener('DOMContentLoaded', () => {
     // --- CONEXIÓN COMPATIBLE CON WEB Y APLICACIÓN MÓVIL (.APK) ---
-    const SERVER_URL = "https://piedra-papel-tijera-9k7e.onrender.com"; // <-- REEMPLAZA ESTO CON LA URL REAL DE TU SERVIDOR EN RENDER
+    const SERVER_URL = "https://piedra-papel-tijera-9k7e.onrender.com";
 
     const socket = window.location.protocol.startsWith('http') && !window.location.hostname.includes('localhost')
         ? io() 
         : io(SERVER_URL);
 
     let miRol = 0;
+    let nombresJugadores = { p1: "Jugador 1", p2: "Jugador 2" };
 
     // Contenedores
     const lobbyContainer = document.getElementById('lobbyContainer');
     const juegoContainer = document.getElementById('juegoContainer');
     const btnCrear = document.getElementById('btnCrear');
     const btnUnirse = document.getElementById('btnUnirse');
+    const inputNombre = document.getElementById('inputNombre');
     const inputCodigo = document.getElementById('inputCodigo');
     const errorLobby = document.getElementById('errorLobby');
 
@@ -36,20 +38,32 @@ window.addEventListener('DOMContentLoaded', () => {
     // Eventos de Lobby
     if (btnCrear) {
         btnCrear.onclick = () => {
+            const nombre = inputNombre ? inputNombre.value.trim() : "";
+            if (!nombre) {
+                if (errorLobby) errorLobby.textContent = "Ingresa tu nombre antes de continuar.";
+                return;
+            }
             if (errorLobby) errorLobby.textContent = "Creando sala...";
-            socket.emit('crearSala');
+            socket.emit('crearSala', { nombre });
         };
     }
 
     if (btnUnirse) {
         btnUnirse.onclick = () => {
+            const nombre = inputNombre ? inputNombre.value.trim() : "";
             const codigo = inputCodigo ? inputCodigo.value.trim() : "";
-            if (codigo) {
-                if (errorLobby) errorLobby.textContent = "Uniéndose...";
-                socket.emit('unirseSala', codigo);
-            } else if (errorLobby) {
-                errorLobby.textContent = "Ingresa un código válido.";
+
+            if (!nombre) {
+                if (errorLobby) errorLobby.textContent = "Ingresa tu nombre antes de continuar.";
+                return;
             }
+            if (!codigo) {
+                if (errorLobby) errorLobby.textContent = "Ingresa un código válido.";
+                return;
+            }
+
+            if (errorLobby) errorLobby.textContent = "Uniéndose...";
+            socket.emit('unirseSala', { codigo, nombre });
         };
     }
 
@@ -58,11 +72,13 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     socket.on('salaCreada', (data) => {
-        iniciarEntornoJuego(data.codigo, 1, "Eres el Jugador 1 (Esperando rival...)");
+        if (data.nombres) nombresJugadores = data.nombres;
+        iniciarEntornoJuego(data.codigo, 1, `Hola ${nombresJugadores.p1} (Esperando rival...)`);
     });
 
     socket.on('salaUnida', (data) => {
-        iniciarEntornoJuego(data.codigo, 2, "Eres el Jugador 2");
+        if (data.nombres) nombresJugadores = data.nombres;
+        iniciarEntornoJuego(data.codigo, 2, `Hola ${nombresJugadores.p2}`);
     });
 
     function iniciarEntornoJuego(codigo, rol, texto) {
@@ -78,13 +94,34 @@ window.addEventListener('DOMContentLoaded', () => {
         if (rolTexto) rolTexto.textContent = texto;
         if (timerDisplay) timerDisplay.textContent = "15";
 
+        actualizarNombresEnPantalla();
         asignarEventosJuego();
         deshabilitarBotones(true);
+    }
+
+    function actualizarNombresEnPantalla() {
+        const labelJ1 = document.getElementById('labelJ1');
+        const labelJ2 = document.getElementById('labelJ2');
+        const eleccionJ1 = document.getElementById('eleccionJ1');
+        const eleccionJ2 = document.getElementById('eleccionJ2');
+
+        if (labelJ1) labelJ1.textContent = nombresJugadores.p1;
+        if (labelJ2) labelJ2.textContent = nombresJugadores.p2;
+
+        if (eleccionJ1 && !eleccionJ1.textContent.includes('¡Listo!')) {
+            eleccionJ1.textContent = `${nombresJugadores.p1}: -`;
+        }
+        if (eleccionJ2 && !eleccionJ2.textContent.includes('¡Listo!')) {
+            eleccionJ2.textContent = `${nombresJugadores.p2}: -`;
+        }
     }
 
     // Eventos de Juego
     socket.on('estadoPartida', (data) => {
         const resultadoTexto = document.getElementById('resultadoTexto');
+        if (data.nombres) nombresJugadores = data.nombres;
+        actualizarNombresEnPantalla();
+
         if (data.lista) {
             if (resultadoTexto) resultadoTexto.textContent = "¡Partida lista! Elige tu opción.";
             deshabilitarBotones(false);
@@ -103,11 +140,13 @@ window.addEventListener('DOMContentLoaded', () => {
         const eleccionJ1 = document.getElementById('eleccionJ1');
         const eleccionJ2 = document.getElementById('eleccionJ2');
 
-        if (data.jugador === 1 && eleccionJ1) eleccionJ1.textContent = "Jugador 1: ¡Listo!";
-        if (data.jugador === 2 && eleccionJ2) eleccionJ2.textContent = "Jugador 2: ¡Listo!";
+        if (data.jugador === 1 && eleccionJ1) eleccionJ1.textContent = `${nombresJugadores.p1}: ¡Listo!`;
+        if (data.jugador === 2 && eleccionJ2) eleccionJ2.textContent = `${nombresJugadores.p2}: ¡Listo!`;
     });
 
     socket.on('resultadoRonda', (data) => {
+        if (data.nombres) nombresJugadores = data.nombres;
+
         const eleccionJ1 = document.getElementById('eleccionJ1');
         const eleccionJ2 = document.getElementById('eleccionJ2');
         const scoreJ1 = document.getElementById('scoreJ1');
@@ -116,8 +155,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
         const emojis = { piedra: "✊", papel: "✋", tijera: "✌️", nada: "❌ (Tiempo agotado)" };
 
-        if (eleccionJ1) eleccionJ1.textContent = `Jugador 1: ${emojis[data.elecciones[1]] || '-'}`;
-        if (eleccionJ2) eleccionJ2.textContent = `Jugador 2: ${emojis[data.elecciones[2]] || '-'}`;
+        if (eleccionJ1) eleccionJ1.textContent = `${nombresJugadores.p1}: ${emojis[data.elecciones[1]] || '-'}`;
+        if (eleccionJ2) eleccionJ2.textContent = `${nombresJugadores.p2}: ${emojis[data.elecciones[2]] || '-'}`;
 
         if (scoreJ1) scoreJ1.textContent = data.scores.p1;
         if (scoreJ2) scoreJ2.textContent = data.scores.p2;
@@ -137,8 +176,8 @@ window.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             deshabilitarBotones(false);
             if (resultadoTexto) resultadoTexto.textContent = "¡Siguiente ronda! Elige tu opción.";
-            if (eleccionJ1) eleccionJ1.textContent = "Jugador 1: -";
-            if (eleccionJ2) eleccionJ2.textContent = "Jugador 2: -";
+            if (eleccionJ1) eleccionJ1.textContent = `${nombresJugadores.p1}: -`;
+            if (eleccionJ2) eleccionJ2.textContent = `${nombresJugadores.p2}: -`;
         }, 3000);
     });
 
@@ -158,8 +197,8 @@ window.addEventListener('DOMContentLoaded', () => {
         const eleccionJ1 = document.getElementById('eleccionJ1');
         const eleccionJ2 = document.getElementById('eleccionJ2');
 
-        if (miRol === 1 && eleccionJ1) eleccionJ1.textContent = "Jugador 1: ¡Listo!";
-        if (miRol === 2 && eleccionJ2) eleccionJ2.textContent = "Jugador 2: ¡Listo!";
+        if (miRol === 1 && eleccionJ1) eleccionJ1.textContent = `${nombresJugadores.p1}: ¡Listo!`;
+        if (miRol === 2 && eleccionJ2) eleccionJ2.textContent = `${nombresJugadores.p2}: ¡Listo!`;
 
         deshabilitarBotones(true);
     }
