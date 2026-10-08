@@ -2,12 +2,16 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1e1e2f">
     <title>Piedra, Papel o Tijera - Con Salas</title>
-    <!-- CAMBIA ESTA LÍNEA EN TU <head>: -->
+
+    <!-- Permitir conexiones WebSocket y HTTP hacia Render desde la APK -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline' https://piedra-papel-tijera-9k7e.onrender.com wss://piedra-papel-tijera-9k7e.onrender.com https://cdn.socket.io; connect-src 'self' https://piedra-papel-tijera-9k7e.onrender.com wss://piedra-papel-tijera-9k7e.onrender.com;">
+
     <link rel="stylesheet" href="styles.css?v=2">
-    <script src="/socket.io/socket.io.js"></script>
+    <!-- Cargar cliente de Socket.io desde CDN para compatibilidad con la APK -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <link rel="manifest" href="/manifest.json">
 </head>
 <body>
@@ -16,6 +20,11 @@
 
         <!-- Pantalla de Lobby (Salas) -->
         <div id="lobbyContainer">
+            <!-- CAMPO DE ENTRADA PARA EL NOMBRE -->
+            <div class="lobby-input-group" style="margin-bottom: 12px;">
+                <input type="text" id="inputNombre" placeholder="Tu Nombre / Apodo" maxlength="12">
+            </div>
+
             <button id="btnCrear" class="btn-lobby">Crear Sala Privada</button>
             <hr class="lobby-divider">
             
@@ -35,12 +44,12 @@
 
             <div class="marcador">
                 <div class="score-box">
-                    <span class="label">Jugador 1</span>
+                    <span id="labelJ1" class="label">Jugador 1</span>
                     <span id="scoreJ1" class="points">0</span>
                 </div>
                 <div class="score-divider">:</div>
                 <div class="score-box">
-                    <span class="label">Jugador 2</span>
+                    <span id="labelJ2" class="label">Jugador 2</span>
                     <span id="scoreJ2" class="points">0</span>
                 </div>
             </div>
@@ -61,6 +70,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>
