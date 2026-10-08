@@ -25,12 +25,14 @@ function generarCodigo() {
 
 io.on('connection', (socket) => {
 
-    // Crear Sala
-    socket.on('crearSala', () => {
+    // Crear Sala (recibe el objeto con el nombre)
+    socket.on('crearSala', (data) => {
+        const nombre = (data && data.nombre) ? data.nombre.trim() : "Jugador 1";
         const codigo = generarCodigo();
         
         salas.set(codigo, {
             jugadores: { p1: socket.id, p2: null },
+            nombres: { p1: nombre, p2: "Esperando..." },
             elecciones: {},
             scores: { p1: 0, p2: 0 },
             timer: null,
@@ -40,11 +42,14 @@ io.on('connection', (socket) => {
         socket.join(codigo);
         socket.codigoSala = codigo;
 
-        socket.emit('salaCreada', { codigo, jugador: 1 });
+        socket.emit('salaCreada', { codigo, jugador: 1, nombres: salas.get(codigo).nombres });
     });
 
-    // Unirse a Sala
-    socket.on('unirseSala', (codigoIngresado) => {
+    // Unirse a Sala (acepta objeto con { codigo, nombre } o solo string de código)
+    socket.on('unirseSala', (data) => {
+        const codigoIngresado = typeof data === 'object' ? data.codigo : data;
+        const nombre = (typeof data === 'object' && data.nombre) ? data.nombre.trim() : "Jugador 2";
+
         if (!codigoIngresado) return socket.emit('errorSala', 'Ingresa un código.');
 
         const codigo = codigoIngresado.toString().trim().toUpperCase();
@@ -59,13 +64,15 @@ io.on('connection', (socket) => {
         }
 
         sala.jugadores.p2 = socket.id;
+        sala.nombres.p2 = nombre;
+
         socket.join(codigo);
         socket.codigoSala = codigo;
 
-        socket.emit('salaUnida', { codigo, jugador: 2 });
+        socket.emit('salaUnida', { codigo, jugador: 2, nombres: sala.nombres });
 
-        // Notificar inicio de la partida
-        io.to(codigo).emit('estadoPartida', { lista: true });
+        // Notificar inicio de la partida enviando los nombres actualizados
+        io.to(codigo).emit('estadoPartida', { lista: true, nombres: sala.nombres });
         iniciarTemporizador(codigo);
     });
 
@@ -136,7 +143,8 @@ function evaluarRonda(codigo) {
     io.to(codigo).emit('resultadoRonda', {
         elecciones: sala.elecciones,
         ganador: resultado,
-        scores: sala.scores
+        scores: sala.scores,
+        nombres: sala.nombres
     });
 
     sala.elecciones = {};
