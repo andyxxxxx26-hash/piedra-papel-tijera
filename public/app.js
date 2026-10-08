@@ -144,26 +144,46 @@ window.addEventListener('DOMContentLoaded', () => {
         if (data.jugador === 2 && eleccionJ2) eleccionJ2.textContent = `${nombresJugadores.p2}: ¡Listo!`;
     });
 
-    socket.on('resultadoRonda', (data) => {
-        if (data.nombres) nombresJugadores = data.nombres;
+    // Reemplaza los listeners de socket.on('resultadoRonda') y agrega socket.on('reiniciarPartida')
 
-        const eleccionJ1 = document.getElementById('eleccionJ1');
-        const eleccionJ2 = document.getElementById('eleccionJ2');
-        const scoreJ1 = document.getElementById('scoreJ1');
-        const scoreJ2 = document.getElementById('scoreJ2');
-        const resultadoTexto = document.getElementById('resultadoTexto');
+socket.on('resultadoRonda', (data) => {
+    if (data.nombres) nombresJugadores = data.nombres;
 
-        const emojis = { piedra: "✊", papel: "✋", tijera: "✌️", nada: "❌ (Tiempo agotado)" };
+    const eleccionJ1 = document.getElementById('eleccionJ1');
+    const eleccionJ2 = document.getElementById('eleccionJ2');
+    const scoreJ1 = document.getElementById('scoreJ1');
+    const scoreJ2 = document.getElementById('scoreJ2');
+    const resultadoTexto = document.getElementById('resultadoTexto');
 
-        if (eleccionJ1) eleccionJ1.textContent = `${nombresJugadores.p1}: ${emojis[data.elecciones[1]] || '-'}`;
-        if (eleccionJ2) eleccionJ2.textContent = `${nombresJugadores.p2}: ${emojis[data.elecciones[2]] || '-'}`;
+    const emojis = { piedra: "✊", papel: "✋", tijera: "✌️", nada: "❌ (Tiempo agotado)" };
 
-        if (scoreJ1) scoreJ1.textContent = data.scores.p1;
-        if (scoreJ2) scoreJ2.textContent = data.scores.p2;
+    if (eleccionJ1) eleccionJ1.textContent = `${nombresJugadores.p1}: ${emojis[data.elecciones[1]] || '-'}`;
+    if (eleccionJ2) eleccionJ2.textContent = `${nombresJugadores.p2}: ${emojis[data.elecciones[2]] || '-'}`;
 
+    if (scoreJ1) scoreJ1.textContent = data.scores.p1;
+    if (scoreJ2) scoreJ2.textContent = data.scores.p2;
+
+    deshabilitarBotones(true);
+
+    // ¿Hay un ganador definitivo de las 3 rondas (2 victorias)?
+    if (data.ganadorJuego) {
+        const nombreGanador = data.ganadorJuego === 1 ? nombresJugadores.p1 : nombresJugadores.p2;
+        
+        if (data.ganadorJuego === miRol) {
+            resultadoTexto.textContent = `🏆 ¡ERES EL CAMPEÓN DE LA PARTIDA! 🏆`;
+        } else {
+            resultadoTexto.textContent = `👑 ¡${nombreGanador} ha ganado la partida!`;
+        }
+
+        setTimeout(() => {
+            if (resultadoTexto) resultadoTexto.textContent = "Reiniciando partida en 5 segundos...";
+        }, 2000);
+
+    } else {
+        // Mensajes de ronda normal
         if (resultadoTexto) {
             if (data.ganador === 0) {
-                resultadoTexto.textContent = "¡Empate!";
+                resultadoTexto.textContent = "¡Empate en esta ronda!";
             } else if (data.ganador === miRol) {
                 resultadoTexto.textContent = "¡Ganaste esta ronda! 🎉";
             } else {
@@ -171,15 +191,30 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        deshabilitarBotones(true);
-
         setTimeout(() => {
             deshabilitarBotones(false);
             if (resultadoTexto) resultadoTexto.textContent = "¡Siguiente ronda! Elige tu opción.";
             if (eleccionJ1) eleccionJ1.textContent = `${nombresJugadores.p1}: -`;
             if (eleccionJ2) eleccionJ2.textContent = `${nombresJugadores.p2}: -`;
         }, 3000);
-    });
+    }
+});
+// Evento para reiniciar los marcadores al comenzar una nueva partida completa
+socket.on('reiniciarPartida', (data) => {
+    const scoreJ1 = document.getElementById('scoreJ1');
+    const scoreJ2 = document.getElementById('scoreJ2');
+    const eleccionJ1 = document.getElementById('eleccionJ1');
+    const eleccionJ2 = document.getElementById('eleccionJ2');
+    const resultadoTexto = document.getElementById('resultadoTexto');
+
+    if (scoreJ1) scoreJ1.textContent = "0";
+    if (scoreJ2) scoreJ2.textContent = "0";
+    if (eleccionJ1) eleccionJ1.textContent = `${nombresJugadores.p1}: -`;
+    if (eleccionJ2) eleccionJ2.textContent = `${nombresJugadores.p2}: -`;
+
+    if (resultadoTexto) resultadoTexto.textContent = "¡Nueva partida iniciada! Elige tu opción.";
+    deshabilitarBotones(false);
+});
 
     function asignarEventosJuego() {
         const btnPiedra = document.querySelector('.piedra');
