@@ -27,24 +27,25 @@ io.on('connection', (socket) => {
 
     // Crear Sala (recibe el objeto con el nombre)
     socket.on('crearSala', (data) => {
-        const nombre = (data && data.nombre) ? data.nombre.trim() : "Jugador 1";
-        const codigo = generarCodigo();
-        
-        salas.set(codigo, {
-            jugadores: { p1: socket.id, p2: null },
-            nombres: { p1: nombre, p2: "Esperando..." },
-            elecciones: {},
-            scores: { p1: 0, p2: 0 },
-            timer: null,
-            tiempo: 15
-        });
-
-        socket.join(codigo);
-        socket.codigoSala = codigo;
-
-        socket.emit('salaCreada', { codigo, jugador: 1, nombres: salas.get(codigo).nombres });
+    const nombre = (data && data.nombre) ? data.nombre.trim() : "Jugador 1";
+    const codigo = generarCodigo();
+    
+    salas.set(codigo, {
+        jugadores: { p1: socket.id, p2: null },
+        nombres: { p1: nombre, p2: "Esperando..." },
+        elecciones: {},
+        scores: { p1: 0, p2: 0 },
+        timer: null,
+        tiempo: 15,
+        maxVictorias: 2, // Al de 2 victorias se termina el juego
+        juegoTerminado: false
     });
 
+    socket.join(codigo);
+    socket.codigoSala = codigo;
+
+    socket.emit('salaCreada', { codigo, jugador: 1, nombres: salas.get(codigo).nombres });
+});
     // Unirse a Sala (acepta objeto con { codigo, nombre } o solo string de código)
     socket.on('unirseSala', (data) => {
         const codigoIngresado = typeof data === 'object' ? data.codigo : data;
@@ -127,9 +128,10 @@ function iniciarTemporizador(codigo) {
     }, 1000);
 }
 
+// 2. Reemplaza la función evaluarRonda(codigo) completa por esta:
 function evaluarRonda(codigo) {
     const sala = salas.get(codigo);
-    if (!sala) return;
+    if (!sala || sala.juegoTerminado) return;
 
     clearInterval(sala.timer);
 
@@ -140,20 +142,50 @@ function evaluarRonda(codigo) {
     if (resultado === 1) sala.scores.p1++;
     if (resultado === 2) sala.scores.p2++;
 
+    // Verificar si alguien ya ganó el juego (Alcanzó 2 victorias)
+    let ganadorJuego = null;
+    if (sala.scores.p1 >= sala.maxVictorias) ganadorJuego = 1;
+    if (sala.scores.p2 >= sala.maxVictorias) ganadorJuego = 2;
+
     io.to(codigo).emit('resultadoRonda', {
         elecciones: sala.elecciones,
         ganador: resultado,
         scores: sala.scores,
-        nombres: sala.nombres
+        nombres: sala.nombres,
+        ganadorJuego: ganadorJuego // 1, 2 o null
     });
 
     sala.elecciones = {};
-    setTimeout(() => {
-        if (salas.has(codigo)) {
-            iniciarTemporizador(codigo);
-        }
-    }, 3000);
+
+    if (ganadorJuego) {
+        // Fin de la partida
+        sala.juegoTerminado = true;
+        
+        // Reiniciar la partida automáticamente tras 5 segundos
+        setTimeout(() => {
+            if (salas.has(codigo)) {
+                const s = salas.get(codigo);
+                s.scores = { p1: 0, p2: 0 };
+                s.juegoTerminado = false;
+                
+                io.to(codigo).emit('reiniciarPartida', {
+                    scores: s.scores,
+                    nombres: s.nombres
+                });
+                
+                iniciarTemporizador(codigo);
+            }
+        }, 5000);
+    } else {
+        // Siguiente ronda tras 3 segundos
+        setTimeout(() => {
+            if (salas.has(codigo) && !salas.get(codigo).juegoTerminado) {
+                iniciarTemporizador(codigo);
+            }
+        }, 3000);
+    }
 }
+// -----
 
 function evaluar(j1, j2) {
     if (j1 === j2) return 0;
