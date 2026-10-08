@@ -9,7 +9,7 @@
     <!-- Permitir conexiones WebSocket y HTTP hacia Render desde la APK -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline' https://piedra-papel-tijera-9k7e.onrender.com wss://piedra-papel-tijera-9k7e.onrender.com https://cdn.socket.io; connect-src 'self' https://piedra-papel-tijera-9k7e.onrender.com wss://piedra-papel-tijera-9k7e.onrender.com;">
 
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=3">
     <!-- Cargar cliente de Socket.io desde CDN para compatibilidad con la APK -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <link rel="manifest" href="/manifest.json">
@@ -67,9 +67,19 @@
                 <button class="papel" title="Papel"></button>
                 <button class="tijera" title="Tijera"></button>
             </div>
+
+            <!-- REACCIONES DE EMOJIS -->
+            <div class="reacciones-container">
+                <button class="btn-emoji" data-emoji="😜" title="Burlón">😜</button>
+                <button class="btn-emoji" data-emoji="😡" title="Enojado">😡</button>
+                <button class="btn-emoji" data-emoji="😄" title="Sonriendo">😄</button>
+                <button class="btn-emoji" data-emoji="😍" title="Amor">😍</button>
+            </div>
+
+            <div id="emojiOverlay" class="emoji-overlay"></div>
         </div>
     </div>
 
-    <script src="app.js?v=6"></script>
+    <script src="app.js?v=7"></script>
 </body>
 </html>
