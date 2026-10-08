@@ -6,7 +6,8 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: { origin: "*" }
+    cors: { origin: "*" },
+    transports: ['websocket', 'polling']
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -25,28 +26,29 @@ function generarCodigo() {
 
 io.on('connection', (socket) => {
 
-    // Crear Sala (recibe el objeto con el nombre)
+    // Crear Sala
     socket.on('crearSala', (data) => {
-    const nombre = (data && data.nombre) ? data.nombre.trim() : "Jugador 1";
-    const codigo = generarCodigo();
-    
-    salas.set(codigo, {
-        jugadores: { p1: socket.id, p2: null },
-        nombres: { p1: nombre, p2: "Esperando..." },
-        elecciones: {},
-        scores: { p1: 0, p2: 0 },
-        timer: null,
-        tiempo: 15,
-        maxVictorias: 2, // Al de 2 victorias se termina el juego
-        juegoTerminado: false
+        const nombre = (data && data.nombre) ? data.nombre.trim() : "Jugador 1";
+        const codigo = generarCodigo();
+        
+        salas.set(codigo, {
+            jugadores: { p1: socket.id, p2: null },
+            nombres: { p1: nombre, p2: "Esperando..." },
+            elecciones: {},
+            scores: { p1: 0, p2: 0 },
+            timer: null,
+            tiempo: 15,
+            maxVictorias: 2, // Primer jugador en alcanzar 2 victorias gana
+            juegoTerminado: false
+        });
+
+        socket.join(codigo);
+        socket.codigoSala = codigo;
+
+        socket.emit('salaCreada', { codigo, jugador: 1, nombres: salas.get(codigo).nombres });
     });
 
-    socket.join(codigo);
-    socket.codigoSala = codigo;
-
-    socket.emit('salaCreada', { codigo, jugador: 1, nombres: salas.get(codigo).nombres });
-});
-    // Unirse a Sala (acepta objeto con { codigo, nombre } o solo string de código)
+    // Unirse a Sala
     socket.on('unirseSala', (data) => {
         const codigoIngresado = typeof data === 'object' ? data.codigo : data;
         const nombre = (typeof data === 'object' && data.nombre) ? data.nombre.trim() : "Jugador 2";
@@ -72,7 +74,7 @@ io.on('connection', (socket) => {
 
         socket.emit('salaUnida', { codigo, jugador: 2, nombres: sala.nombres });
 
-        // Notificar inicio de la partida enviando los nombres actualizados
+        // Notificar inicio de la partida enviando nombres actualizados
         io.to(codigo).emit('estadoPartida', { lista: true, nombres: sala.nombres });
         iniciarTemporizador(codigo);
     });
@@ -91,6 +93,17 @@ io.on('connection', (socket) => {
         } else {
             socket.to(codigo).emit('jugadorListo', { jugador: data.jugador });
         }
+    });
+
+    // Enviar y retrasmitir Emojis / Reacciones
+    socket.on('enviarEmoji', (data) => {
+        const codigo = socket.codigoSala;
+        if (!codigo) return;
+
+        io.to(codigo).emit('recibirEmoji', {
+            jugador: data.jugador,
+            emoji: data.emoji
+        });
     });
 
     // Manejar Desconexión
@@ -128,7 +141,6 @@ function iniciarTemporizador(codigo) {
     }, 1000);
 }
 
-// 2. Reemplaza la función evaluarRonda(codigo) completa por esta:
 function evaluarRonda(codigo) {
     const sala = salas.get(codigo);
     if (!sala || sala.juegoTerminado) return;
@@ -142,7 +154,7 @@ function evaluarRonda(codigo) {
     if (resultado === 1) sala.scores.p1++;
     if (resultado === 2) sala.scores.p2++;
 
-    // Verificar si alguien ya ganó el juego (Alcanzó 2 victorias)
+    // Verificar si alguien ya ganó la partida (2 victorias)
     let ganadorJuego = null;
     if (sala.scores.p1 >= sala.maxVictorias) ganadorJuego = 1;
     if (sala.scores.p2 >= sala.maxVictorias) ganadorJuego = 2;
@@ -152,13 +164,12 @@ function evaluarRonda(codigo) {
         ganador: resultado,
         scores: sala.scores,
         nombres: sala.nombres,
-        ganadorJuego: ganadorJuego // 1, 2 o null
+        ganadorJuego: ganadorJuego
     });
 
     sala.elecciones = {};
 
     if (ganadorJuego) {
-        // Fin de la partida
         sala.juegoTerminado = true;
         
         // Reiniciar la partida automáticamente tras 5 segundos
@@ -177,7 +188,6 @@ function evaluarRonda(codigo) {
             }
         }, 5000);
     } else {
-        // Siguiente ronda tras 3 segundos
         setTimeout(() => {
             if (salas.has(codigo) && !salas.get(codigo).juegoTerminado) {
                 iniciarTemporizador(codigo);
@@ -185,7 +195,6 @@ function evaluarRonda(codigo) {
         }, 3000);
     }
 }
-// -----
 
 function evaluar(j1, j2) {
     if (j1 === j2) return 0;
